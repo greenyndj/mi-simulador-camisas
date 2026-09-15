@@ -434,6 +434,15 @@
 
       <!-- TAB COLOR -->
       <div id="colorTab" class="tab-content active">
+        <div class="section-title">Modelo de Camisa</div>
+        <select id="shirtDesignSelect" class="select-input">
+          <option value="classic">Clásica T-Shirt</option>
+          <option value="oversized">Oversized</option>
+          <option value="fitted">Fitted / Entallada</option>
+          <option value="vneck">V-Neck</option>
+          <option value="polo">Polo</option>
+        </select>
+
         <div class="section-title">Color de la Camiseta</div>
         <div class="color-picker-wrapper">
           <input type="color" id="shirtColor" value="#ffffff" />
@@ -545,20 +554,111 @@
   </main>
 
   <script>
-    // 1. CONFIGURACIÓN DE VISTAS (FRENTE Y ESPALDA)
-    const viewSettings = {
-      front: {
-        mask: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
-        printArea: { left: 145, top: 125, width: 190, height: 275 }
+    // 1. CONFIGURACIÓN COMPLETA DE DISEÑOS DE CAMISAS
+    const shirtDesigns = {
+      classic: {
+        name: 'Clásica T-Shirt',
+        front: {
+          mask: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
+          printArea: { left: 145, top: 125, width: 190, height: 275 }
+        },
+        back: {
+          mask: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png',
+          printArea: { left: 135, top: 105, width: 210, height: 320 }
+        }
       },
-      back: {
-        mask: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png',
-        printArea: { left: 135, top: 105, width: 210, height: 320 }
+      oversized: {
+        name: 'Oversized',
+        front: {
+          mask: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
+          printArea: { left: 120, top: 110, width: 240, height: 310 }
+        },
+        back: {
+          mask: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png',
+          printArea: { left: 110, top: 85, width: 260, height: 350 }
+        }
+      },
+      fitted: {
+        name: 'Fitted / Entallada',
+        front: {
+          mask: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
+          printArea: { left: 160, top: 135, width: 160, height: 250 }
+        },
+        back: {
+          mask: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png',
+          printArea: { left: 155, top: 120, width: 170, height: 290 }
+        }
+      },
+      vneck: {
+        name: 'V-Neck',
+        front: {
+          mask: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
+          printArea: { left: 145, top: 145, width: 190, height: 255 }
+        },
+        back: {
+          mask: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png',
+          printArea: { left: 135, top: 105, width: 210, height: 320 }
+        }
+      },
+      polo: {
+        name: 'Polo',
+        front: {
+          mask: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
+          printArea: { left: 145, top: 160, width: 190, height: 240 }
+        },
+        back: {
+          mask: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png',
+          printArea: { left: 135, top: 125, width: 210, height: 300 }
+        }
       }
     };
 
+    let currentDesign = 'classic';
+    let viewSettings = shirtDesigns[currentDesign];
+
+    // Almacenamiento de estados por diseño y vista
+    const designStates = {};
+    Object.keys(shirtDesigns).forEach(designKey => {
+      designStates[designKey] = { front: [], back: [] };
+    });
+
+    // Función para cambiar diseño de camisa
+    function switchShirtDesign(designKey) {
+      if (currentDesign === designKey) return;
+
+      // Guardar diseño del lado actual en el almacenamiento del diseño actual
+      const elements = canvas.getObjects().filter(o => o !== printBoundaryGuide);
+      designStates[currentDesign][activeSide] = elements.map(o => o.toObject(['clipPath']));
+
+      currentDesign = designKey;
+      viewSettings = shirtDesigns[currentDesign];
+
+      // Actualizar máscara y área de impresión
+      const conf = viewSettings[activeSide];
+      const cLayer = document.getElementById('shirtColorLayer');
+      const tLayer = document.getElementById('shirtTextureLayer');
+
+      cLayer.style.maskImage = `url('${conf.mask}')`;
+      cLayer.style.webkitMaskImage = `url('${conf.mask}')`;
+      tLayer.style.backgroundImage = `url('${conf.mask}')`;
+
+      // Limpiar y reinicializar
+      canvas.clear();
+      initPrintArea();
+
+      // Restaurar el estado del nuevo diseño
+      if (designStates[currentDesign][activeSide] && designStates[currentDesign][activeSide].length > 0) {
+        fabric.util.enlivenObjects(designStates[currentDesign][activeSide], (restored) => {
+          restored.forEach(obj => {
+            obj.set({ clipPath: currentClipRect });
+            canvas.add(obj);
+          });
+          canvas.renderAll();
+        });
+      }
+    }
+
     let activeSide = 'front';
-    const sideStates = { front: [], back: [] };
 
     // 2. INICIALIZAR FABRIC.JS
     const canvas = new fabric.Canvas('studioCanvas', {
@@ -606,7 +706,7 @@
 
       // Guardar diseño del lado visible
       const elements = canvas.getObjects().filter(o => o !== printBoundaryGuide);
-      sideStates[activeSide] = elements.map(o => o.toObject(['clipPath']));
+      designStates[currentDesign][activeSide] = elements.map(o => o.toObject(['clipPath']));
 
       activeSide = target;
 
@@ -627,8 +727,8 @@
       canvas.clear();
       initPrintArea();
 
-      if (sideStates[activeSide] && sideStates[activeSide].length > 0) {
-        fabric.util.enlivenObjects(sideStates[activeSide], (restored) => {
+      if (designStates[currentDesign][activeSide] && designStates[currentDesign][activeSide].length > 0) {
+        fabric.util.enlivenObjects(designStates[currentDesign][activeSide], (restored) => {
           restored.forEach(obj => {
             obj.set({ clipPath: currentClipRect });
             canvas.add(obj);
@@ -657,6 +757,12 @@
     }
 
     shirtColorPicker.addEventListener('input', (e) => applyColor(e.target.value));
+
+    // 4.5. CAMBIO DE DISEÑO DE CAMISA
+    const shirtDesignSelect = document.getElementById('shirtDesignSelect');
+    shirtDesignSelect.addEventListener('change', (e) => {
+      switchShirtDesign(e.target.value);
+    });
 
     // 5. PESTAÑAS LATERALES
     function setTab(tabId, el) {
