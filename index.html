@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulador Pro DTF - Camisetas Realistas</title>
+  <title>Simulador Pro DTF - Frente y Espalda</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * {
@@ -44,7 +44,14 @@
       justify-content: center;
     }
 
-    /* Contenedor del Mockup */
+    /* Contenedor Mockup */
+    .mockup-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
     .mockup-stage {
       position: relative;
       width: 500px;
@@ -63,9 +70,6 @@
       width: 100%;
       height: 100%;
       background-color: #ffffff;
-      /* Aplica máscara sobre la forma de la camisa */
-      -webkit-mask-image: url('https://i.ibb.co/3sX8M8K/tshirt-mask.png');
-      mask-image: url('https://i.ibb.co/3sX8M8K/tshirt-mask.png');
       -webkit-mask-size: contain;
       mask-size: contain;
       -webkit-mask-repeat: no-repeat;
@@ -76,7 +80,7 @@
       z-index: 1;
     }
 
-    /* Capa 2: Canvas interactivo */
+    /* Capa 2: Canvas Fabric.js */
     .canvas-container-layer {
       position: absolute;
       top: 0;
@@ -84,29 +88,56 @@
       z-index: 2;
     }
 
-    /* Capa 3: Sombras y arrugas realistas */
+    /* Capa 3: Textura y Arrugas (Multiply) */
     .shirt-overlay-layer {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: url('https://i.ibb.co/3sX8M8K/tshirt-mask.png');
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
-      /* Fusiona las arrugas con el color y el estampado */
       mix-blend-mode: multiply;
-      pointer-events: none; /* Permite manipular el canvas debajo */
+      pointer-events: none;
       z-index: 3;
     }
 
-    /* Panel de herramientas */
+    /* Selector de Vistas Frontal / Trasera */
+    .view-switcher {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .view-btn {
+      flex: 1;
+      padding: 10px;
+      background: #29292e;
+      border: 1px solid #3e3e42;
+      color: #c4c4cc;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .view-btn.active {
+      background: #00875f;
+      color: #ffffff;
+      border-color: #00b37e;
+    }
+
+    /* Sidebar / Controles */
     .sidebar {
       width: 320px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     .panel-card {
@@ -201,26 +232,37 @@
 <body>
 
   <header>
-    <h1>Simulador de Camisetas DTF</h1>
-    <p>Previsualización realista con texturas, sombras y delimitador de área</p>
+    <h1>Simulador DTF Multi-Vista</h1>
+    <p>Diseña el frente y la espalda con texturas reales y límites de impresión</p>
   </header>
 
   <div class="app-layout">
-    <!-- Stage de visualización -->
-    <div class="mockup-stage" id="stage">
-      <!-- Capa 1: Color -->
-      <div class="shirt-color-layer" id="shirtColorLayer"></div>
-      
-      <!-- Capa 2: Canvas Fabric.js -->
-      <div class="canvas-container-layer">
-        <canvas id="tshirtCanvas" width="500" height="560"></canvas>
+    <!-- Contenedor del Mockup con selector de vistas -->
+    <div class="mockup-wrapper">
+      <div class="view-switcher">
+        <button id="viewFrontBtn" class="view-btn active" onclick="switchView('front')">
+          👕 Vista Frente
+        </button>
+        <button id="viewBackBtn" class="view-btn" onclick="switchView('back')">
+          👕 Vista Espalda
+        </button>
       </div>
 
-      <!-- Capa 3: Textura y Arrugas (Multiply) -->
-      <div class="shirt-overlay-layer"></div>
+      <div class="mockup-stage" id="stage">
+        <!-- Capa 1: Color dinámico -->
+        <div class="shirt-color-layer" id="shirtColorLayer"></div>
+        
+        <!-- Capa 2: Canvas interactivo -->
+        <div class="canvas-container-layer">
+          <canvas id="tshirtCanvas" width="500" height="560"></canvas>
+        </div>
+
+        <!-- Capa 3: Textura Multiply -->
+        <div class="shirt-overlay-layer" id="shirtOverlayLayer"></div>
+      </div>
     </div>
 
-    <!-- Controles -->
+    <!-- Controles laterales -->
     <aside class="sidebar">
       <!-- Color -->
       <div class="panel-card">
@@ -236,10 +278,10 @@
         </div>
       </div>
 
-      <!-- Estampado -->
+      <!-- Estampados para la vista activa -->
       <div class="panel-card">
-        <label>Estampado / Logo</label>
-        <label for="imageUpload" class="btn">Subir Diseño (PNG)</label>
+        <label id="activeViewLabel">Estampado (Frente)</label>
+        <label for="imageUpload" class="btn">Subir Diseño a esta vista</label>
         <input type="file" id="imageUpload" accept="image/png, image/jpeg" />
 
         <div class="toggle-row">
@@ -248,68 +290,138 @@
         </div>
 
         <button class="btn btn-outline" id="centerHBtn">Centrar horizontalmente</button>
-        <button class="btn btn-danger" id="deleteBtn">Eliminar diseño</button>
+        <button class="btn btn-danger" id="deleteBtn">Eliminar estampado</button>
       </div>
 
-      <!-- Exportación -->
+      <!-- Descargas -->
       <div class="panel-card">
-        <button class="btn" id="exportBtn" style="background: #12a454;">Descargar Mockup Completo</button>
+        <button class="btn" id="exportCurrentBtn" style="background: #12a454;">Descargar Vista Actual</button>
       </div>
     </aside>
   </div>
 
   <script>
-    // 1. Inicializar Fabric.js
+    // 1. Configuración de Mockups por Vista
+    // (Nota: Puedes reemplazar estas URLs por rutas locales como 'assets/front.png' y 'assets/back.png' en tu repo)
+    const viewsConfig = {
+      front: {
+        maskUrl: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
+        printArea: { left: 150, top: 130, width: 200, height: 280 }
+      },
+      back: {
+        maskUrl: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png', // Textura de espalda
+        printArea: { left: 140, top: 110, width: 220, height: 320 }
+      }
+    };
+
+    let currentView = 'front';
+
+    // Estado en memoria para almacenar los estampados de cada vista
+    const shirtState = {
+      front: [],
+      back: []
+    };
+
+    // 2. Inicializar Fabric Canvas
     const canvas = new fabric.Canvas('tshirtCanvas', {
       preserveObjectStacking: true
     });
 
-    // 2. Definir Área de Impresión (Estilo A4: 200px x 280px centrado en el pecho)
-    const printArea = {
-      left: 150,
-      top: 130,
-      width: 200,
-      height: 280
-    };
+    let printGuide = null;
+    let clipRect = null;
 
-    // Rectángulo punteado visual (Guía)
-    const printGuide = new fabric.Rect({
-      left: printArea.left,
-      top: printArea.top,
-      width: printArea.width,
-      height: printArea.height,
-      fill: 'rgba(0, 179, 126, 0.05)',
-      stroke: '#00b37e',
-      strokeDashArray: [6, 6],
-      strokeWidth: 1.5,
-      selectable: false,
-      evented: false
-    });
+    // Crear/actualizar la guía y clipPath según la vista activa
+    function setupPrintBoundary() {
+      const area = viewsConfig[currentView].printArea;
 
-    canvas.add(printGuide);
+      if (printGuide) canvas.remove(printGuide);
 
-    // 3. Delimitar el área real de recorte (ClipPath)
-    // Evita que el estampado sobresalga del pecho de la camisa
-    const clipRect = new fabric.Rect({
-      left: printArea.left,
-      top: printArea.top,
-      width: printArea.width,
-      height: printArea.height,
-      absolutePositioned: true
-    });
+      clipRect = new fabric.Rect({
+        left: area.left,
+        top: area.top,
+        width: area.width,
+        height: area.height,
+        absolutePositioned: true
+      });
 
-    // 4. Manejo de color
-    const colorInput = document.getElementById('shirtColor');
+      const showGuide = document.getElementById('toggleGuide').checked;
+      printGuide = new fabric.Rect({
+        left: area.left,
+        top: area.top,
+        width: area.width,
+        height: area.height,
+        fill: 'rgba(0, 179, 126, 0.05)',
+        stroke: '#00b37e',
+        strokeDashArray: [6, 6],
+        strokeWidth: 1.5,
+        selectable: false,
+        evented: false,
+        visible: showGuide
+      });
+
+      canvas.add(printGuide);
+      canvas.sendToBack(printGuide);
+    }
+
+    // 3. Manejo de cambio de Vistas (Frente / Espalda)
+    function switchView(targetView) {
+      if (currentView === targetView) return;
+
+      // A. Guardar los objetos de diseño actuales (excluyendo la guía de impresión)
+      const currentObjects = canvas.getObjects().filter(obj => obj !== printGuide);
+      shirtState[currentView] = currentObjects.map(obj => obj.toObject(['clipPath']));
+
+      // B. Cambiar la vista actual
+      currentView = targetView;
+
+      // Actualizar botones de interfaz
+      document.getElementById('viewFrontBtn').classList.toggle('active', currentView === 'front');
+      document.getElementById('viewBackBtn').classList.toggle('active', currentView === 'back');
+      document.getElementById('activeViewLabel').innerText = `Estampado (${currentView === 'front' ? 'Frente' : 'Espalda'})`;
+
+      // C. Cambiar imagen de máscara y overlay CSS
+      const config = viewsConfig[currentView];
+      const colorLayer = document.getElementById('shirtColorLayer');
+      const overlayLayer = document.getElementById('shirtOverlayLayer');
+
+      colorLayer.style.maskImage = `url('${config.maskUrl}')`;
+      colorLayer.style.webkitMaskImage = `url('${config.maskUrl}')`;
+      overlayLayer.style.backgroundImage = `url('${config.maskUrl}')`;
+
+      // D. Limpiar canvas y regenerar la guía del nuevo lado
+      canvas.clear();
+      setupPrintBoundary();
+
+      // E. Restaurar objetos del lado destino
+      if (shirtState[currentView] && shirtState[currentView].length > 0) {
+        fabric.util.enlivenObjects(shirtState[currentView], (enlivenedObjects) => {
+          enlivenedObjects.forEach((obj) => {
+            obj.set({ clipPath: clipRect });
+            canvas.add(obj);
+          });
+          canvas.renderAll();
+        });
+      }
+    }
+
+    // 4. Inicialización inicial
+    setupPrintBoundary();
+    const initialConfig = viewsConfig.front;
     const colorLayer = document.getElementById('shirtColorLayer');
+    const overlayLayer = document.getElementById('shirtOverlayLayer');
+    colorLayer.style.maskImage = `url('${initialConfig.maskUrl}')`;
+    colorLayer.style.webkitMaskImage = `url('${initialConfig.maskUrl}')`;
+    overlayLayer.style.backgroundImage = `url('${initialConfig.maskUrl}')`;
 
+    // 5. Manejo del Color
+    const colorInput = document.getElementById('shirtColor');
     function updateColor(hex) {
       colorInput.value = hex;
       colorLayer.style.backgroundColor = hex;
     }
-
     colorInput.addEventListener('input', (e) => updateColor(e.target.value));
 
-    // 5. Carga de archivo de estampado
+    // 6. Carga de Imágenes de Estampado
     document.getElementById('imageUpload').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -317,20 +429,21 @@
       const reader = new FileReader();
       reader.onload = (event) => {
         fabric.Image.fromURL(event.target.result, (img) => {
-          // Escalar proporcional dentro del área
-          if (img.width > printArea.width) {
-            img.scaleToWidth(printArea.width * 0.85);
+          const area = viewsConfig[currentView].printArea;
+
+          if (img.width > area.width) {
+            img.scaleToWidth(area.width * 0.85);
           }
 
           img.set({
-            left: printArea.left + (printArea.width - img.getScaledWidth()) / 2,
-            top: printArea.top + 30,
+            left: area.left + (area.width - img.getScaledWidth()) / 2,
+            top: area.top + 30,
             cornerColor: '#00b37e',
             cornerStyle: 'circle',
             borderColor: '#00b37e',
             cornerSize: 10,
             transparentCorners: false,
-            clipPath: clipRect // Restringe el diseño al área A4
+            clipPath: clipRect
           });
 
           canvas.add(img);
@@ -339,38 +452,39 @@
         });
       };
       reader.readAsDataURL(file);
+      e.target.value = ''; // Reset input
     });
 
-    // 6. Centrado Horizontal del diseño activo
+    // 7. Acciones de Centrado y Eliminado
     document.getElementById('centerHBtn').addEventListener('click', () => {
       const active = canvas.getActiveObject();
+      const area = viewsConfig[currentView].printArea;
       if (active) {
         active.set({
-          left: printArea.left + (printArea.width - active.getScaledWidth()) / 2
+          left: area.left + (area.width - active.getScaledWidth()) / 2
         });
         active.setCoords();
         canvas.renderAll();
       }
     });
 
-    // 7. Alternar visibilidad de la guía punteada
     document.getElementById('toggleGuide').addEventListener('change', (e) => {
-      printGuide.set('visible', e.target.checked);
-      canvas.renderAll();
+      if (printGuide) {
+        printGuide.set('visible', e.target.checked);
+        canvas.renderAll();
+      }
     });
 
-    // 8. Eliminar elemento seleccionado
     document.getElementById('deleteBtn').addEventListener('click', () => {
       const active = canvas.getActiveObject();
-      if (active) {
+      if (active && active !== printGuide) {
         canvas.remove(active);
         canvas.renderAll();
       }
     });
 
-    // 9. Exportar imagen fusionada completa (Color + Estampado + Sombras)
-    document.getElementById('exportBtn').addEventListener('click', () => {
-      // Ocultar la guía punteada temporalmente para el render
+    // 8. Descarga de Mockup fusionado con multiply
+    document.getElementById('exportCurrentBtn').addEventListener('click', () => {
       const guideWasVisible = printGuide.visible;
       printGuide.set('visible', false);
       canvas.renderAll();
@@ -381,29 +495,27 @@
       const ctx = exportCanvas.getContext('2d');
 
       const overlayImg = new Image();
-      overlayImg.crossOrigin = "anonymous";
-      overlayImg.src = 'https://i.ibb.co/3sX8M8K/tshirt-mask.png';
+      overlayImg.crossOrigin = 'anonymous';
+      overlayImg.src = viewsConfig[currentView].maskUrl;
 
       overlayImg.onload = () => {
-        // 1. Dibujar silueta con el color de fondo
+        // Fondo con color de la tela
         ctx.fillStyle = colorInput.value;
         ctx.fillRect(0, 0, 500, 560);
 
-        // 2. Dibujar el canvas con el estampado
+        // Estampado
         ctx.drawImage(canvas.lowerCanvasEl, 0, 0);
 
-        // 3. Aplicar modo multiply con las sombras/arrugas
+        // Fusión Multiply con sombras reales
         ctx.globalCompositeOperation = 'multiply';
         ctx.drawImage(overlayImg, 0, 0, 500, 560);
         ctx.globalCompositeOperation = 'source-over';
 
-        // Descargar PNG
         const link = document.createElement('a');
-        link.download = 'mockup-camiseta.png';
+        link.download = `mockup-camiseta-${currentView}.png`;
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
 
-        // Restaurar estado de la guía
         printGuide.set('visible', guideWasVisible);
         canvas.renderAll();
       };
