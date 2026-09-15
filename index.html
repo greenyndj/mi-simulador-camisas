@@ -616,13 +616,19 @@
     let currentDesign = 'classic';
     let viewSettings = shirtDesigns[currentDesign];
 
+    // Almacenamiento de estados por diseño y vista
+    const designStates = {};
+    Object.keys(shirtDesigns).forEach(designKey => {
+      designStates[designKey] = { front: [], back: [] };
+    });
+
     // Función para cambiar diseño de camisa
     function switchShirtDesign(designKey) {
       if (currentDesign === designKey) return;
 
-      // Guardar diseño del lado actual
+      // Guardar diseño del lado actual en el almacenamiento del diseño actual
       const elements = canvas.getObjects().filter(o => o !== printBoundaryGuide);
-      sideStates[activeSide] = elements.map(o => o.toObject(['clipPath']));
+      designStates[currentDesign][activeSide] = elements.map(o => o.toObject(['clipPath']));
 
       currentDesign = designKey;
       viewSettings = shirtDesigns[currentDesign];
@@ -640,8 +646,9 @@
       canvas.clear();
       initPrintArea();
 
-      if (sideStates[activeSide] && sideStates[activeSide].length > 0) {
-        fabric.util.enlivenObjects(sideStates[activeSide], (restored) => {
+      // Restaurar el estado del nuevo diseño
+      if (designStates[currentDesign][activeSide] && designStates[currentDesign][activeSide].length > 0) {
+        fabric.util.enlivenObjects(designStates[currentDesign][activeSide], (restored) => {
           restored.forEach(obj => {
             obj.set({ clipPath: currentClipRect });
             canvas.add(obj);
@@ -652,7 +659,6 @@
     }
 
     let activeSide = 'front';
-    const sideStates = { front: [], back: [] };
 
     // 2. INICIALIZAR FABRIC.JS
     const canvas = new fabric.Canvas('studioCanvas', {
@@ -700,7 +706,7 @@
 
       // Guardar diseño del lado visible
       const elements = canvas.getObjects().filter(o => o !== printBoundaryGuide);
-      sideStates[activeSide] = elements.map(o => o.toObject(['clipPath']));
+      designStates[currentDesign][activeSide] = elements.map(o => o.toObject(['clipPath']));
 
       activeSide = target;
 
@@ -721,8 +727,8 @@
       canvas.clear();
       initPrintArea();
 
-      if (sideStates[activeSide] && sideStates[activeSide].length > 0) {
-        fabric.util.enlivenObjects(sideStates[activeSide], (restored) => {
+      if (designStates[currentDesign][activeSide] && designStates[currentDesign][activeSide].length > 0) {
+        fabric.util.enlivenObjects(designStates[currentDesign][activeSide], (restored) => {
           restored.forEach(obj => {
             obj.set({ clipPath: currentClipRect });
             canvas.add(obj);
