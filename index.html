@@ -1046,11 +1046,20 @@
 
     function init3D() {
       if (is3dInitialized) return;
-      is3dInitialized = true;
-
+      
       canvas3d = document.getElementById('canvas3d');
+      if (!canvas3d) return; // Canvas not yet in DOM
+      
       const width = canvas3d.parentElement.clientWidth;
       const height = canvas3d.parentElement.clientHeight;
+      
+      // Skip if dimensions are not ready
+      if (width < 100 || height < 100) {
+        setTimeout(init3D, 100);
+        return;
+      }
+      
+      is3dInitialized = true;
 
       // Scene setup
       scene = new THREE.Scene();
@@ -1135,18 +1144,29 @@
       scene.add(shirt);
 
       // Update texture when canvas changes
-      canvas.on('object:modified', updateShirtTexture);
-      canvas.on('object:added', updateShirtTexture);
+      if (canvas) {
+        canvas.on('object:modified', updateShirtTexture);
+        canvas.on('object:added', updateShirtTexture);
+        canvas.on('object:removed', updateShirtTexture);
+      }
     }
 
     function updateShirtTexture() {
-      if (!shirt) return;
-      const canvas2d = document.getElementById('studioCanvas');
-      const texture = new THREE.CanvasTexture(canvas2d);
-      texture.flipY = false;
-      texture.needsUpdate = true;
-      shirt.material.map = texture;
-      shirt.material.needsUpdate = true;
+      if (!shirt || !scene) return;
+      
+      try {
+        const canvas2d = document.getElementById('studioCanvas');
+        if (!canvas2d) return;
+        
+        const texture = new THREE.CanvasTexture(canvas2d);
+        texture.flipY = false;
+        texture.needsUpdate = true;
+        
+        shirt.material.map = texture;
+        shirt.material.needsUpdate = true;
+      } catch (e) {
+        console.warn('Texture update failed:', e);
+      }
     }
 
     function resetView3D() {
@@ -1183,30 +1203,61 @@
     }
 
     function animate3D() {
-      requestAnimationFrame(animate3D);
-      
-      if (controls) controls.update();
-      if (shirt) {
-        // Gentle floating motion
-        shirt.rotation.y += 0.001;
+      try {
+        requestAnimationFrame(animate3D);
+        
+        if (controls) controls.update();
+        if (shirt) {
+          // Gentle floating motion
+          shirt.rotation.y += 0.001;
+        }
+        
+        if (renderer && scene && camera) {
+          renderer.render(scene, camera);
+        }
+      } catch (e) {
+        console.warn('Animation error:', e);
       }
-      
-      renderer.render(scene, camera);
     }
 
     // Initialize 3D when page loads
     window.addEventListener('load', () => {
-      setTimeout(init3D, 100);
-    });
-
-    // Update shirt color in 3D
-    shirtColor.addEventListener('change', (e) => {
-      if (shirt) {
-        const color = new THREE.Color(e.target.value);
-        shirt.material.color = color;
+      try {
+        setTimeout(init3D, 100);
+      } catch (e) {
+        console.warn('3D initialization deferred:', e);
       }
     });
 
-  
+    // Also try to initialize immediately if DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        try {
+          setTimeout(init3D, 100);
+        } catch (e) {
+          console.warn('3D initialization failed:', e);
+        }
+      });
+    } else {
+      try {
+        setTimeout(init3D, 100);
+      } catch (e) {
+        console.warn('3D initialization failed:', e);
+      }
+    }
+
+    // Update shirt color in 3D
+    try {
+      shirtColor.addEventListener('change', (e) => {
+        if (shirt) {
+          const color = new THREE.Color(e.target.value);
+          shirt.material.color = color;
+        }
+      });
+    } catch (e) {
+      console.warn('Shirt color listener failed:', e);
+    }
+
+  </script>
 </body>
 </html>
