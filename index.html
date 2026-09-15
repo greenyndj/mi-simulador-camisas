@@ -3,67 +3,322 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulador Pro DTF - Frente y Espalda</title>
+  <title>T-Shirt Studio & Mockup Creator</title>
+  <!-- Fabric.js para el motor 2D interactivo -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&family=Oswald:wght@500;700&family=Pacifico&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --bg-app: #121316;
+      --bg-panel: #1b1c21;
+      --bg-panel-light: #25262c;
+      --border-color: #2e3038;
+      --accent: #00b37e;
+      --accent-hover: #02996c;
+      --text-main: #f3f4f6;
+      --text-muted: #8c8fa1;
+      --danger: #e63946;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Montserrat', system-ui, sans-serif;
+      user-select: none;
     }
 
     body {
-      background: #121214;
-      color: #e1e1e6;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px;
-      min-height: 100vh;
-    }
-
-    header {
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    header h1 {
-      font-size: 1.8rem;
-      color: #00b37e;
-    }
-
-    .app-layout {
-      display: flex;
-      gap: 32px;
-      background: #202024;
-      padding: 28px;
-      border-radius: 14px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    /* Contenedor Mockup */
-    .mockup-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .mockup-stage {
-      position: relative;
-      width: 500px;
-      height: 560px;
-      background: #18181b;
-      border-radius: 10px;
+      background: var(--bg-app);
+      color: var(--text-main);
+      height: 100vh;
       overflow: hidden;
-      box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Capa 1: Color de fondo con máscara */
-    .shirt-color-layer {
+    /* 1. TOP NAVBAR */
+    .topbar {
+      height: 54px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .brand span {
+      color: var(--accent);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: var(--bg-panel-light);
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: #32333b;
+    }
+
+    /* 2. MAIN WORKSPACE */
+    .main-workspace {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 54px);
+      position: relative;
+    }
+
+    /* SIDEBAR IZQUIERDA (TOOL TABS) */
+    .sidebar-left {
+      width: 320px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+
+    .nav-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: #16171a;
+    }
+
+    .nav-tab {
+      flex: 1;
+      padding: 12px 6px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .nav-tab:hover {
+      color: #fff;
+    }
+
+    .nav-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: var(--bg-panel);
+    }
+
+    .tab-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .control-box {
+      margin-bottom: 20px;
+    }
+
+    .color-picker-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: none;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    input[type="color"]::-webkit-color-swatch {
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+
+    .color-presets {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .preset-ball {
+      width: 100%;
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .preset-ball:hover {
+      transform: scale(1.08);
+    }
+
+    .upload-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      padding: 24px 12px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      transition: all 0.2s;
+    }
+
+    .upload-dropzone:hover {
+      border-color: var(--accent);
+      background: rgba(0, 179, 126, 0.05);
+    }
+
+    .upload-dropzone p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .input-text {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-panel-light);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+
+    .select-input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-panel-light);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+
+    /* 3. CENTRO: VIEWPORT / CANVAS */
+    .viewport {
+      flex: 1;
+      background: radial-gradient(circle, #252830 0%, #151619 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Selector flotante de Front / Back */
+    .floating-views {
+      position: absolute;
+      top: 18px;
+      display: flex;
+      gap: 6px;
+      background: var(--bg-panel);
+      padding: 4px;
+      border-radius: 30px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 10;
+    }
+
+    .view-pill {
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .view-pill.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Mockup Container */
+    .mockup-container {
+      position: relative;
+      width: 480px;
+      height: 540px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+    }
+
+    /* Capa 1: Color con máscara */
+    .layer-color {
       position: absolute;
       top: 0;
       left: 0;
@@ -76,20 +331,20 @@
       mask-repeat: no-repeat;
       -webkit-mask-position: center;
       mask-position: center;
-      transition: background-color 0.15s ease;
       z-index: 1;
+      transition: background-color 0.15s ease;
     }
 
-    /* Capa 2: Canvas Fabric.js */
-    .canvas-container-layer {
+    /* Capa 2: Fabric Canvas */
+    .layer-canvas {
       position: absolute;
       top: 0;
       left: 0;
       z-index: 2;
     }
 
-    /* Capa 3: Textura y Arrugas (Multiply) */
-    .shirt-overlay-layer {
+    /* Capa 3: Sombras, textura y arrugas Multiply */
+    .layer-texture {
       position: absolute;
       top: 0;
       left: 0;
@@ -103,240 +358,223 @@
       z-index: 3;
     }
 
-    /* Selector de Vistas Frontal / Trasera */
-    .view-switcher {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-    }
-
-    .view-btn {
-      flex: 1;
-      padding: 10px;
-      background: #29292e;
-      border: 1px solid #3e3e42;
-      color: #c4c4cc;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }
-
-    .view-btn.active {
-      background: #00875f;
-      color: #ffffff;
-      border-color: #00b37e;
-    }
-
-    /* Sidebar / Controles */
-    .sidebar {
-      width: 320px;
+    /* 4. SIDEBAR DERECHA (INSPECTOR DE ELEMENTO) */
+    .sidebar-right {
+      width: 260px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-color);
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      z-index: 10;
     }
 
-    .panel-card {
-      background: #29292e;
-      padding: 16px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    label {
+    .inspector-title {
       font-size: 0.85rem;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #a8a8b3;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
     }
 
-    input[type="color"] {
-      width: 100%;
-      height: 44px;
-      border: 1px solid #323238;
-      border-radius: 6px;
-      cursor: pointer;
-      background: #121214;
+    .inspector-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .preset-colors {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
+    .range-group {
+      display: flex;
+      flex-direction: column;
       gap: 6px;
     }
 
-    .swatch {
-      width: 100%;
-      height: 32px;
-      border-radius: 4px;
-      border: 1px solid #3e3e42;
-      cursor: pointer;
+    .range-group span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
 
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      background: #00875f;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      text-align: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn:hover {
-      background: #00b37e;
-    }
-
-    .btn-outline {
-      background: transparent;
-      border: 1px solid #4d4d57;
-      color: #c4c4cc;
-    }
-
-    .btn-outline:hover {
-      background: #323238;
-      color: #fff;
-    }
-
-    .btn-danger {
-      background: #7a1f26;
-    }
-
-    .btn-danger:hover {
-      background: #aa2834;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .toggle-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.9rem;
+    input[type="range"] {
+      accent-color: var(--accent);
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Simulador DTF Multi-Vista</h1>
-    <p>Diseña el frente y la espalda con texturas reales y límites de impresión</p>
-  </header>
-
-  <div class="app-layout">
-    <!-- Contenedor del Mockup con selector de vistas -->
-    <div class="mockup-wrapper">
-      <div class="view-switcher">
-        <button id="viewFrontBtn" class="view-btn active" onclick="switchView('front')">
-          👕 Vista Frente
-        </button>
-        <button id="viewBackBtn" class="view-btn" onclick="switchView('back')">
-          👕 Vista Espalda
-        </button>
-      </div>
-
-      <div class="mockup-stage" id="stage">
-        <!-- Capa 1: Color dinámico -->
-        <div class="shirt-color-layer" id="shirtColorLayer"></div>
-        
-        <!-- Capa 2: Canvas interactivo -->
-        <div class="canvas-container-layer">
-          <canvas id="tshirtCanvas" width="500" height="560"></canvas>
-        </div>
-
-        <!-- Capa 3: Textura Multiply -->
-        <div class="shirt-overlay-layer" id="shirtOverlayLayer"></div>
-      </div>
+  <!-- 1. TOPBAR ESTILO PRINTONATOR -->
+  <header class="topbar">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>
+      </svg>
+      PRINT<span>STUDIO</span>
     </div>
 
-    <!-- Controles laterales -->
-    <aside class="sidebar">
-      <!-- Color -->
-      <div class="panel-card">
-        <label>Color de la prenda</label>
-        <input type="color" id="shirtColor" value="#ffffff" />
-        <div class="preset-colors">
-          <button class="swatch" style="background: #ffffff;" onclick="updateColor('#ffffff')"></button>
-          <button class="swatch" style="background: #111111;" onclick="updateColor('#111111')"></button>
-          <button class="swatch" style="background: #8b0000;" onclick="updateColor('#8b0000')"></button>
-          <button class="swatch" style="background: #0a2540;" onclick="updateColor('#0a2540')"></button>
-          <button class="swatch" style="background: #2d5a27;" onclick="updateColor('#2d5a27')"></button>
-          <button class="swatch" style="background: #d4af37;" onclick="updateColor('#d4af37')"></button>
+    <div class="top-actions">
+      <button class="btn btn-secondary" id="clearAllBtn">Limpiar Vista</button>
+      <button class="btn btn-primary" id="downloadMockupBtn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Descargar Mockup (PNG)
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. CONTENEDOR PRINCIPAL -->
+  <main class="main-workspace">
+    <!-- PANEL IZQUIERDO -->
+    <aside class="sidebar-left">
+      <div class="nav-tabs">
+        <div class="nav-tab active" onclick="setTab('colorTab', this)">Color</div>
+        <div class="nav-tab" onclick="setTab('imageTab', this)">Imágenes</div>
+        <div class="nav-tab" onclick="setTab('textTab', this)">Texto</div>
+      </div>
+
+      <!-- TAB COLOR -->
+      <div id="colorTab" class="tab-content active">
+        <div class="section-title">Color de la Camiseta</div>
+        <div class="color-picker-wrapper">
+          <input type="color" id="shirtColor" value="#ffffff" />
+          <span id="colorHexText" style="font-size: 0.85rem; font-weight: 600;">#FFFFFF</span>
+        </div>
+
+        <div class="section-title">Colores Populares</div>
+        <div class="color-presets">
+          <div class="preset-ball" style="background: #ffffff;" onclick="applyColor('#ffffff')"></div>
+          <div class="preset-ball" style="background: #111111;" onclick="applyColor('#111111')"></div>
+          <div class="preset-ball" style="background: #1e3a8a;" onclick="applyColor('#1e3a8a')"></div>
+          <div class="preset-ball" style="background: #b91c1c;" onclick="applyColor('#b91c1c')"></div>
+          <div class="preset-ball" style="background: #15803d;" onclick="applyColor('#15803d')"></div>
+          <div class="preset-ball" style="background: #f59e0b;" onclick="applyColor('#f59e0b')"></div>
+          <div class="preset-ball" style="background: #6b7280;" onclick="applyColor('#6b7280')"></div>
+          <div class="preset-ball" style="background: #4c1d95;" onclick="applyColor('#4c1d95')"></div>
+          <div class="preset-ball" style="background: #ec4899;" onclick="applyColor('#ec4899')"></div>
+          <div class="preset-ball" style="background: #d4af37;" onclick="applyColor('#d4af37')"></div>
         </div>
       </div>
 
-      <!-- Estampados para la vista activa -->
-      <div class="panel-card">
-        <label id="activeViewLabel">Estampado (Frente)</label>
-        <label for="imageUpload" class="btn">Subir Diseño a esta vista</label>
-        <input type="file" id="imageUpload" accept="image/png, image/jpeg" />
-
-        <div class="toggle-row">
-          <span>Mostrar guía de impresión</span>
-          <input type="checkbox" id="toggleGuide" checked />
-        </div>
-
-        <button class="btn btn-outline" id="centerHBtn">Centrar horizontalmente</button>
-        <button class="btn btn-danger" id="deleteBtn">Eliminar estampado</button>
+      <!-- TAB IMAGEN -->
+      <div id="imageTab" class="tab-content">
+        <div class="section-title">Cargar Estampado</div>
+        <label for="fileUpload" class="upload-dropzone">
+          <svg width="32" height="32" fill="none" stroke="#8c8fa1" stroke-width="1.8" viewBox="0 0 24 24">
+            <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <p><strong>Haz clic para subir</strong> o arrastra un archivo PNG / JPG</p>
+        </label>
+        <input type="file" id="fileUpload" accept="image/*" />
       </div>
 
-      <!-- Descargas -->
-      <div class="panel-card">
-        <button class="btn" id="exportCurrentBtn" style="background: #12a454;">Descargar Vista Actual</button>
+      <!-- TAB TEXTO -->
+      <div id="textTab" class="tab-content">
+        <div class="section-title">Agregar Frase / Texto</div>
+        <input type="text" id="customTextInput" class="input-text" placeholder="Escribe tu texto..." value="URBAN STYLE" />
+        
+        <label class="section-title" style="display:block; margin-top:8px;">Tipografía</label>
+        <select id="fontSelect" class="select-input">
+          <option value="Bebas Neue">Bebas Neue (Titular Urbano)</option>
+          <option value="Oswald">Oswald (Impacto)</option>
+          <option value="Montserrat" selected>Montserrat (Moderno)</option>
+          <option value="Pacifico">Pacifico (Script / Cursiva)</option>
+          <option value="Roboto">Roboto (Limpio)</option>
+        </select>
+
+        <label class="section-title" style="display:block;">Color de Fuente</label>
+        <div class="color-picker-wrapper">
+          <input type="color" id="textColor" value="#ffffff" />
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%; justify-content: center;" id="addTextBtn">
+          + Agregar Texto al Diseño
+        </button>
       </div>
     </aside>
-  </div>
+
+    <!-- ÁREA CENTRAL (VIEWPORT) -->
+    <section class="viewport">
+      <!-- Selector Frontal / Trasero flotante -->
+      <div class="floating-views">
+        <div id="btnFront" class="view-pill active" onclick="switchView('front')">FRENTE</div>
+        <div id="btnBack" class="view-pill" onclick="switchView('back')">ESPALDA</div>
+      </div>
+
+      <!-- Mockup con triple capa realista -->
+      <div class="mockup-container">
+        <!-- Capa 1: Color de fondo recortado con máscara -->
+        <div class="layer-color" id="shirtColorLayer"></div>
+        
+        <!-- Capa 2: Canvas interactivo -->
+        <div class="layer-canvas">
+          <canvas id="studioCanvas" width="480" height="540"></canvas>
+        </div>
+
+        <!-- Capa 3: Textura Multiply (sombras/arrugas) -->
+        <div class="layer-texture" id="shirtTextureLayer"></div>
+      </div>
+    </section>
+
+    <!-- PANEL DERECHO (INSPECTOR DE ELEMENTOS SELECCIONADOS) -->
+    <aside class="sidebar-right">
+      <div class="inspector-title">Propiedades</div>
+      
+      <div id="inspectorContent" style="display: flex; flex-direction: column; gap: 14px;">
+        <p id="noSelectionMsg" style="font-size: 0.8rem; color: var(--text-muted);">
+          Selecciona un elemento en la camisa para editarlo.
+        </p>
+
+        <div id="objectControls" style="display: none; flex-direction: column; gap: 14px;">
+          <div class="range-group">
+            <span>Opacidad</span>
+            <input type="range" id="opacityRange" min="0.1" max="1" step="0.05" value="1" />
+          </div>
+
+          <div class="inspector-actions">
+            <button class="btn btn-secondary" id="btnCenterH">Centrar Horizontal</button>
+            <button class="btn btn-secondary" id="btnSendBack">Enviar atrás</button>
+            <button class="btn btn-secondary" id="btnBringFront">Traer al frente</button>
+            <button class="btn btn-secondary" id="btnDuplicate">Duplicar</button>
+            <button class="btn btn-secondary" id="btnDelete" style="color: var(--danger); border-color: rgba(230,57,70,0.3);">
+              Eliminar Elemento
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
 
   <script>
-    // 1. Configuración de Mockups por Vista
-    // (Nota: Puedes reemplazar estas URLs por rutas locales como 'assets/front.png' y 'assets/back.png' en tu repo)
-    const viewsConfig = {
+    // 1. CONFIGURACIÓN DE VISTAS (FRENTE Y ESPALDA)
+    const viewSettings = {
       front: {
-        maskUrl: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
-        printArea: { left: 150, top: 130, width: 200, height: 280 }
+        mask: 'https://i.ibb.co/3sX8M8K/tshirt-mask.png',
+        printArea: { left: 145, top: 125, width: 190, height: 275 }
       },
       back: {
-        maskUrl: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png', // Textura de espalda
-        printArea: { left: 140, top: 110, width: 220, height: 320 }
+        mask: 'https://i.ibb.co/6P0qM3P/tshirt-back-mask.png',
+        printArea: { left: 135, top: 105, width: 210, height: 320 }
       }
     };
 
-    let currentView = 'front';
+    let activeSide = 'front';
+    const sideStates = { front: [], back: [] };
 
-    // Estado en memoria para almacenar los estampados de cada vista
-    const shirtState = {
-      front: [],
-      back: []
-    };
-
-    // 2. Inicializar Fabric Canvas
-    const canvas = new fabric.Canvas('tshirtCanvas', {
+    // 2. INICIALIZAR FABRIC.JS
+    const canvas = new fabric.Canvas('studioCanvas', {
       preserveObjectStacking: true
     });
 
-    let printGuide = null;
-    let clipRect = null;
+    let printBoundaryGuide = null;
+    let currentClipRect = null;
 
-    // Crear/actualizar la guía y clipPath según la vista activa
-    function setupPrintBoundary() {
-      const area = viewsConfig[currentView].printArea;
+    function initPrintArea() {
+      const area = viewSettings[activeSide].printArea;
+      
+      if (printBoundaryGuide) canvas.remove(printBoundaryGuide);
 
-      if (printGuide) canvas.remove(printGuide);
-
-      clipRect = new fabric.Rect({
+      // Rectángulo que limita el área de recorte
+      currentClipRect = new fabric.Rect({
         left: area.left,
         top: area.top,
         width: area.width,
@@ -344,59 +582,55 @@
         absolutePositioned: true
       });
 
-      const showGuide = document.getElementById('toggleGuide').checked;
-      printGuide = new fabric.Rect({
+      // Guía visual punteada
+      printBoundaryGuide = new fabric.Rect({
         left: area.left,
         top: area.top,
         width: area.width,
         height: area.height,
-        fill: 'rgba(0, 179, 126, 0.05)',
-        stroke: '#00b37e',
-        strokeDashArray: [6, 6],
+        fill: 'transparent',
+        stroke: 'rgba(0, 179, 126, 0.45)',
+        strokeDashArray: [5, 5],
         strokeWidth: 1.5,
         selectable: false,
-        evented: false,
-        visible: showGuide
+        evented: false
       });
 
-      canvas.add(printGuide);
-      canvas.sendToBack(printGuide);
+      canvas.add(printBoundaryGuide);
+      canvas.sendToBack(printBoundaryGuide);
     }
 
-    // 3. Manejo de cambio de Vistas (Frente / Espalda)
-    function switchView(targetView) {
-      if (currentView === targetView) return;
+    // 3. CAMBIAR VISTA (FRONT / BACK)
+    function switchView(target) {
+      if (activeSide === target) return;
 
-      // A. Guardar los objetos de diseño actuales (excluyendo la guía de impresión)
-      const currentObjects = canvas.getObjects().filter(obj => obj !== printGuide);
-      shirtState[currentView] = currentObjects.map(obj => obj.toObject(['clipPath']));
+      // Guardar diseño del lado visible
+      const elements = canvas.getObjects().filter(o => o !== printBoundaryGuide);
+      sideStates[activeSide] = elements.map(o => o.toObject(['clipPath']));
 
-      // B. Cambiar la vista actual
-      currentView = targetView;
+      activeSide = target;
 
-      // Actualizar botones de interfaz
-      document.getElementById('viewFrontBtn').classList.toggle('active', currentView === 'front');
-      document.getElementById('viewBackBtn').classList.toggle('active', currentView === 'back');
-      document.getElementById('activeViewLabel').innerText = `Estampado (${currentView === 'front' ? 'Frente' : 'Espalda'})`;
+      // Actualizar píldoras visuales
+      document.getElementById('btnFront').classList.toggle('active', activeSide === 'front');
+      document.getElementById('btnBack').classList.toggle('active', activeSide === 'back');
 
-      // C. Cambiar imagen de máscara y overlay CSS
-      const config = viewsConfig[currentView];
-      const colorLayer = document.getElementById('shirtColorLayer');
-      const overlayLayer = document.getElementById('shirtOverlayLayer');
+      // Actualizar máscara y sombras
+      const conf = viewSettings[activeSide];
+      const cLayer = document.getElementById('shirtColorLayer');
+      const tLayer = document.getElementById('shirtTextureLayer');
 
-      colorLayer.style.maskImage = `url('${config.maskUrl}')`;
-      colorLayer.style.webkitMaskImage = `url('${config.maskUrl}')`;
-      overlayLayer.style.backgroundImage = `url('${config.maskUrl}')`;
+      cLayer.style.maskImage = `url('${conf.mask}')`;
+      cLayer.style.webkitMaskImage = `url('${conf.mask}')`;
+      tLayer.style.backgroundImage = `url('${conf.mask}')`;
 
-      // D. Limpiar canvas y regenerar la guía del nuevo lado
+      // Limpiar y restaurar
       canvas.clear();
-      setupPrintBoundary();
+      initPrintArea();
 
-      // E. Restaurar objetos del lado destino
-      if (shirtState[currentView] && shirtState[currentView].length > 0) {
-        fabric.util.enlivenObjects(shirtState[currentView], (enlivenedObjects) => {
-          enlivenedObjects.forEach((obj) => {
-            obj.set({ clipPath: clipRect });
+      if (sideStates[activeSide] && sideStates[activeSide].length > 0) {
+        fabric.util.enlivenObjects(sideStates[activeSide], (restored) => {
+          restored.forEach(obj => {
+            obj.set({ clipPath: currentClipRect });
             canvas.add(obj);
           });
           canvas.renderAll();
@@ -404,33 +638,43 @@
       }
     }
 
-    // 4. Inicialización inicial
-    setupPrintBoundary();
-    const initialConfig = viewsConfig.front;
-    const colorLayer = document.getElementById('shirtColorLayer');
-    const overlayLayer = document.getElementById('shirtOverlayLayer');
-    colorLayer.style.maskImage = `url('${initialConfig.maskUrl}')`;
-    colorLayer.style.webkitMaskImage = `url('${initialConfig.maskUrl}')`;
-    overlayLayer.style.backgroundImage = `url('${initialConfig.maskUrl}')`;
+    // Inicializar visualización base
+    initPrintArea();
+    const initialConf = viewSettings.front;
+    document.getElementById('shirtColorLayer').style.maskImage = `url('${initialConf.mask}')`;
+    document.getElementById('shirtColorLayer').style.webkitMaskImage = `url('${initialConf.mask}')`;
+    document.getElementById('shirtTextureLayer').style.backgroundImage = `url('${initialConf.mask}')`;
 
-    // 5. Manejo del Color
-    const colorInput = document.getElementById('shirtColor');
-    function updateColor(hex) {
-      colorInput.value = hex;
-      colorLayer.style.backgroundColor = hex;
+    // 4. CAMBIO DE COLOR DE LA TELA
+    const shirtColorPicker = document.getElementById('shirtColor');
+    const colorHexText = document.getElementById('colorHexText');
+    const shirtColorLayer = document.getElementById('shirtColorLayer');
+
+    function applyColor(hex) {
+      shirtColorPicker.value = hex;
+      colorHexText.innerText = hex.toUpperCase();
+      shirtColorLayer.style.backgroundColor = hex;
     }
-    colorInput.addEventListener('input', (e) => updateColor(e.target.value));
 
-    // 6. Carga de Imágenes de Estampado
-    document.getElementById('imageUpload').addEventListener('change', (e) => {
+    shirtColorPicker.addEventListener('input', (e) => applyColor(e.target.value));
+
+    // 5. PESTAÑAS LATERALES
+    function setTab(tabId, el) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // 6. CARGAR IMÁGENES
+    document.getElementById('fileUpload').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (event) => {
-        fabric.Image.fromURL(event.target.result, (img) => {
-          const area = viewsConfig[currentView].printArea;
-
+      reader.onload = (f) => {
+        fabric.Image.fromURL(f.target.result, (img) => {
+          const area = viewSettings[activeSide].printArea;
           if (img.width > area.width) {
             img.scaleToWidth(area.width * 0.85);
           }
@@ -439,11 +683,11 @@
             left: area.left + (area.width - img.getScaledWidth()) / 2,
             top: area.top + 30,
             cornerColor: '#00b37e',
-            cornerStyle: 'circle',
             borderColor: '#00b37e',
-            cornerSize: 10,
+            cornerSize: 9,
+            cornerStyle: 'circle',
             transparentCorners: false,
-            clipPath: clipRect
+            clipPath: currentClipRect
           });
 
           canvas.add(img);
@@ -452,71 +696,160 @@
         });
       };
       reader.readAsDataURL(file);
-      e.target.value = ''; // Reset input
+      e.target.value = '';
     });
 
-    // 7. Acciones de Centrado y Eliminado
-    document.getElementById('centerHBtn').addEventListener('click', () => {
+    // 7. AGREGAR TEXTO CON FUENTES
+    document.getElementById('addTextBtn').addEventListener('click', () => {
+      const textVal = document.getElementById('customTextInput').value.trim();
+      if (!textVal) return;
+
+      const fontVal = document.getElementById('fontSelect').value;
+      const colorVal = document.getElementById('textColor').value;
+      const area = viewSettings[activeSide].printArea;
+
+      const textObj = new fabric.Text(textVal, {
+        left: area.left + 20,
+        top: area.top + 50,
+        fontFamily: fontVal,
+        fill: colorVal,
+        fontSize: 32,
+        cornerColor: '#00b37e',
+        borderColor: '#00b37e',
+        cornerSize: 9,
+        cornerStyle: 'circle',
+        transparentCorners: false,
+        clipPath: currentClipRect
+      });
+
+      canvas.add(textObj);
+      canvas.setActiveObject(textObj);
+      canvas.renderAll();
+    });
+
+    // 8. INSPECTOR DERECHO Y EVENTOS
+    const noSelectionMsg = document.getElementById('noSelectionMsg');
+    const objectControls = document.getElementById('objectControls');
+    const opacityRange = document.getElementById('opacityRange');
+
+    function updateInspector() {
       const active = canvas.getActiveObject();
-      const area = viewsConfig[currentView].printArea;
+      if (active && active !== printBoundaryGuide) {
+        noSelectionMsg.style.display = 'none';
+        objectControls.style.display = 'flex';
+        opacityRange.value = active.opacity || 1;
+      } else {
+        noSelectionMsg.style.display = 'block';
+        objectControls.style.display = 'none';
+      }
+    }
+
+    canvas.on('selection:created', updateInspector);
+    canvas.on('selection:updated', updateInspector);
+    canvas.on('selection:cleared', updateInspector);
+
+    opacityRange.addEventListener('input', (e) => {
+      const active = canvas.getActiveObject();
       if (active) {
-        active.set({
-          left: area.left + (area.width - active.getScaledWidth()) / 2
-        });
+        active.set('opacity', parseFloat(e.target.value));
+        canvas.renderAll();
+      }
+    });
+
+    document.getElementById('btnCenterH').addEventListener('click', () => {
+      const active = canvas.getActiveObject();
+      const area = viewSettings[activeSide].printArea;
+      if (active) {
+        active.set('left', area.left + (area.width - active.getScaledWidth()) / 2);
         active.setCoords();
         canvas.renderAll();
       }
     });
 
-    document.getElementById('toggleGuide').addEventListener('change', (e) => {
-      if (printGuide) {
-        printGuide.set('visible', e.target.checked);
+    document.getElementById('btnBringFront').addEventListener('click', () => {
+      const active = canvas.getActiveObject();
+      if (active) {
+        active.bringToFront();
         canvas.renderAll();
       }
     });
 
-    document.getElementById('deleteBtn').addEventListener('click', () => {
+    document.getElementById('btnSendBack').addEventListener('click', () => {
       const active = canvas.getActiveObject();
-      if (active && active !== printGuide) {
+      if (active) {
+        active.sendToBack();
+        canvas.sendToBack(printBoundaryGuide); // Mantener guía al fondo
+        canvas.renderAll();
+      }
+    });
+
+    document.getElementById('btnDuplicate').addEventListener('click', () => {
+      const active = canvas.getActiveObject();
+      if (active) {
+        active.clone((cloned) => {
+          cloned.set({
+            left: active.left + 15,
+            top: active.top + 15,
+            clipPath: currentClipRect
+          });
+          canvas.add(cloned);
+          canvas.setActiveObject(cloned);
+          canvas.renderAll();
+        });
+      }
+    });
+
+    document.getElementById('btnDelete').addEventListener('click', () => {
+      const active = canvas.getActiveObject();
+      if (active) {
         canvas.remove(active);
         canvas.renderAll();
+        updateInspector();
       }
     });
 
-    // 8. Descarga de Mockup fusionado con multiply
-    document.getElementById('exportCurrentBtn').addEventListener('click', () => {
-      const guideWasVisible = printGuide.visible;
-      printGuide.set('visible', false);
+    document.getElementById('clearAllBtn').addEventListener('click', () => {
+      const toRemove = canvas.getObjects().filter(o => o !== printBoundaryGuide);
+      toRemove.forEach(o => canvas.remove(o));
+      canvas.renderAll();
+      updateInspector();
+    });
+
+    // 9. DESCARGA EN ALTA RESOLUCIÓN CON MULTIPLY (FUSIÓN COMPLETA)
+    document.getElementById('downloadMockupBtn').addEventListener('click', () => {
+      const guideVisible = printBoundaryGuide.visible;
+      printBoundaryGuide.set('visible', false);
       canvas.renderAll();
 
       const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = 500;
-      exportCanvas.height = 560;
+      exportCanvas.width = 480;
+      exportCanvas.height = 540;
       const ctx = exportCanvas.getContext('2d');
 
       const overlayImg = new Image();
       overlayImg.crossOrigin = 'anonymous';
-      overlayImg.src = viewsConfig[currentView].maskUrl;
+      overlayImg.src = viewSettings[activeSide].mask;
 
       overlayImg.onload = () => {
-        // Fondo con color de la tela
-        ctx.fillStyle = colorInput.value;
-        ctx.fillRect(0, 0, 500, 560);
+        // 1. Color de prenda
+        ctx.fillStyle = shirtColorPicker.value;
+        ctx.fillRect(0, 0, 480, 540);
 
-        // Estampado
+        // 2. Estampados
         ctx.drawImage(canvas.lowerCanvasEl, 0, 0);
 
-        // Fusión Multiply con sombras reales
+        // 3. Sombras de tela en Multiply
         ctx.globalCompositeOperation = 'multiply';
-        ctx.drawImage(overlayImg, 0, 0, 500, 560);
+        ctx.drawImage(overlayImg, 0, 0, 480, 540);
         ctx.globalCompositeOperation = 'source-over';
 
+        // Descarga
         const link = document.createElement('a');
-        link.download = `mockup-camiseta-${currentView}.png`;
+        link.download = `mockup-${activeSide}-${Date.now()}.png`;
         link.href = exportCanvas.toDataURL('image/png');
         link.click();
 
-        printGuide.set('visible', guideWasVisible);
+        printBoundaryGuide.set('visible', guideVisible);
         canvas.renderAll();
       };
     });
