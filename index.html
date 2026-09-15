@@ -3,229 +3,334 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulador de Camisetas Personalizadas</title>
-  <!-- Fabric.js CDN -->
+  <title>Simulador Pro DTF - Camisetas Realistas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
     }
 
     body {
-      background: #1e1e24;
-      color: #f3f3f3;
+      background: #121214;
+      color: #e1e1e6;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: 24px;
+      min-height: 100vh;
     }
 
     header {
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       text-align: center;
     }
 
-    .container {
+    header h1 {
+      font-size: 1.8rem;
+      color: #00b37e;
+    }
+
+    .app-layout {
       display: flex;
-      gap: 30px;
-      background: #2b2c34;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      gap: 32px;
+      background: #202024;
+      padding: 28px;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
       flex-wrap: wrap;
       justify-content: center;
     }
 
-    .canvas-wrapper {
+    /* Contenedor del Mockup */
+    .mockup-stage {
       position: relative;
-      background: #3a3b45;
-      border-radius: 8px;
+      width: 500px;
+      height: 560px;
+      background: #18181b;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
     }
 
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      width: 280px;
+    /* Capa 1: Color de fondo con máscara */
+    .shirt-color-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      /* Aplica máscara sobre la forma de la camisa */
+      -webkit-mask-image: url('https://i.ibb.co/3sX8M8K/tshirt-mask.png');
+      mask-image: url('https://i.ibb.co/3sX8M8K/tshirt-mask.png');
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      transition: background-color 0.15s ease;
+      z-index: 1;
     }
 
-    .control-group {
+    /* Capa 2: Canvas interactivo */
+    .canvas-container-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+    }
+
+    /* Capa 3: Sombras y arrugas realistas */
+    .shirt-overlay-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://i.ibb.co/3sX8M8K/tshirt-mask.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      /* Fusiona las arrugas con el color y el estampado */
+      mix-blend-mode: multiply;
+      pointer-events: none; /* Permite manipular el canvas debajo */
+      z-index: 3;
+    }
+
+    /* Panel de herramientas */
+    .sidebar {
+      width: 320px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 20px;
+    }
+
+    .panel-card {
+      background: #29292e;
+      padding: 16px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
-      color: #a0a0b0;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a8a8b3;
     }
 
     input[type="color"] {
       width: 100%;
-      height: 42px;
-      border: none;
+      height: 44px;
+      border: 1px solid #323238;
       border-radius: 6px;
       cursor: pointer;
+      background: #121214;
+    }
+
+    .preset-colors {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 100%;
+      height: 32px;
+      border-radius: 4px;
+      border: 1px solid #3e3e42;
+      cursor: pointer;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #00875f;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: #00b37e;
+    }
+
+    .btn-outline {
       background: transparent;
+      border: 1px solid #4d4d57;
+      color: #c4c4cc;
+    }
+
+    .btn-outline:hover {
+      background: #323238;
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: #7a1f26;
+    }
+
+    .btn-danger:hover {
+      background: #aa2834;
     }
 
     input[type="file"] {
       display: none;
     }
 
-    .btn {
-      padding: 10px 15px;
-      background: #4f46e5;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: background 0.2s ease;
-    }
-
-    .btn:hover {
-      background: #4338ca;
-    }
-
-    .btn-secondary {
-      background: #374151;
-    }
-
-    .btn-secondary:hover {
-      background: #4b5563;
-    }
-
-    .palette {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-    }
-
-    .palette-btn {
-      width: 100%;
-      height: 32px;
-      border-radius: 4px;
-      border: 1px solid #555;
-      cursor: pointer;
-    }
-
-    .hint {
-      font-size: 0.8rem;
-      color: #888;
-      line-height: 1.3;
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Simulador de Camisas & Estampados</h1>
-    <p>Personaliza el color y ubica tu diseño con facilidad</p>
+    <h1>Simulador de Camisetas DTF</h1>
+    <p>Previsualización realista con texturas, sombras y delimitador de área</p>
   </header>
 
-  <div class="container">
-    <!-- Área del Mockup / Canvas -->
-    <div class="canvas-wrapper">
-      <canvas id="tshirtCanvas" width="450" height="500"></canvas>
+  <div class="app-layout">
+    <!-- Stage de visualización -->
+    <div class="mockup-stage" id="stage">
+      <!-- Capa 1: Color -->
+      <div class="shirt-color-layer" id="shirtColorLayer"></div>
+      
+      <!-- Capa 2: Canvas Fabric.js -->
+      <div class="canvas-container-layer">
+        <canvas id="tshirtCanvas" width="500" height="560"></canvas>
+      </div>
+
+      <!-- Capa 3: Textura y Arrugas (Multiply) -->
+      <div class="shirt-overlay-layer"></div>
     </div>
 
-    <!-- Panel de Opciones -->
-    <div class="controls">
-      <div class="control-group">
-        <label for="shirtColor">Color de la Camiseta:</label>
+    <!-- Controles -->
+    <aside class="sidebar">
+      <!-- Color -->
+      <div class="panel-card">
+        <label>Color de la prenda</label>
         <input type="color" id="shirtColor" value="#ffffff" />
-        
-        <!-- Colores rápidos predefinidos -->
-        <div class="palette">
-          <button class="palette-btn" style="background: #ffffff;" onclick="setShirtColor('#ffffff')"></button>
-          <button class="palette-btn" style="background: #0a0a0a;" onclick="setShirtColor('#0a0a0a')"></button>
-          <button class="palette-btn" style="background: #e63946;" onclick="setShirtColor('#e63946')"></button>
-          <button class="palette-btn" style="background: #1d3557;" onclick="setShirtColor('#1d3557')"></button>
-          <button class="palette-btn" style="background: #2a9d8f;" onclick="setShirtColor('#2a9d8f')"></button>
+        <div class="preset-colors">
+          <button class="swatch" style="background: #ffffff;" onclick="updateColor('#ffffff')"></button>
+          <button class="swatch" style="background: #111111;" onclick="updateColor('#111111')"></button>
+          <button class="swatch" style="background: #8b0000;" onclick="updateColor('#8b0000')"></button>
+          <button class="swatch" style="background: #0a2540;" onclick="updateColor('#0a2540')"></button>
+          <button class="swatch" style="background: #2d5a27;" onclick="updateColor('#2d5a27')"></button>
+          <button class="swatch" style="background: #d4af37;" onclick="updateColor('#d4af37')"></button>
         </div>
       </div>
 
-      <div class="control-group">
-        <label>Cargar Diseño / Estampado:</label>
-        <label for="imageLoader" class="btn">Subir Imagen (PNG/JPG)</label>
-        <input type="file" id="imageLoader" accept="image/*" />
-        <p class="hint">Tip: Sube imágenes sin fondo (PNG) para un mejor acabado.</p>
+      <!-- Estampado -->
+      <div class="panel-card">
+        <label>Estampado / Logo</label>
+        <label for="imageUpload" class="btn">Subir Diseño (PNG)</label>
+        <input type="file" id="imageUpload" accept="image/png, image/jpeg" />
+
+        <div class="toggle-row">
+          <span>Mostrar guía de impresión</span>
+          <input type="checkbox" id="toggleGuide" checked />
+        </div>
+
+        <button class="btn btn-outline" id="centerHBtn">Centrar horizontalmente</button>
+        <button class="btn btn-danger" id="deleteBtn">Eliminar diseño</button>
       </div>
 
-      <div class="control-group">
-        <button class="btn btn-secondary" id="bringToFront">Traer al frente</button>
-        <button class="btn btn-secondary" id="removeSelected">Eliminar diseño seleccionado</button>
-        <button class="btn" id="exportBtn" style="background: #059669;">Descargar Vista Previa</button>
+      <!-- Exportación -->
+      <div class="panel-card">
+        <button class="btn" id="exportBtn" style="background: #12a454;">Descargar Mockup Completo</button>
       </div>
-    </div>
+    </aside>
   </div>
 
   <script>
-    // Inicializar Canvas de Fabric
-    const canvas = new fabric.Canvas('tshirtCanvas');
-
-    // Silueta vectorial de camiseta base (SVG path simplificado para probar sin imágenes externas)
-    const shirtPath = "M 100 50 L 140 10 L 180 30 Q 225 60 270 30 L 310 10 L 350 50 L 320 100 L 290 85 L 290 380 L 160 380 L 160 85 L 130 100 Z";
-
-    let shirtBackground;
-
-    function initShirt() {
-      shirtBackground = new fabric.Path(shirtPath, {
-        fill: '#ffffff',
-        stroke: '#444444',
-        strokeWidth: 2,
-        left: 50,
-        top: 40,
-        scaleX: 0.9,
-        scaleY: 1.1,
-        selectable: false,
-        evented: false // No interactuable, solo fondo
-      });
-
-      canvas.add(shirtBackground);
-      canvas.sendToBack(shirtBackground);
-      canvas.renderAll();
-    }
-
-    initShirt();
-
-    // Cambiar color de la camisa
-    function setShirtColor(hex) {
-      document.getElementById('shirtColor').value = hex;
-      if (shirtBackground) {
-        shirtBackground.set('fill', hex);
-        canvas.renderAll();
-      }
-    }
-
-    document.getElementById('shirtColor').addEventListener('input', (e) => {
-      setShirtColor(e.target.value);
+    // 1. Inicializar Fabric.js
+    const canvas = new fabric.Canvas('tshirtCanvas', {
+      preserveObjectStacking: true
     });
 
-    // Cargar imagen del estampado
-    document.getElementById('imageLoader').addEventListener('change', (e) => {
+    // 2. Definir Área de Impresión (Estilo A4: 200px x 280px centrado en el pecho)
+    const printArea = {
+      left: 150,
+      top: 130,
+      width: 200,
+      height: 280
+    };
+
+    // Rectángulo punteado visual (Guía)
+    const printGuide = new fabric.Rect({
+      left: printArea.left,
+      top: printArea.top,
+      width: printArea.width,
+      height: printArea.height,
+      fill: 'rgba(0, 179, 126, 0.05)',
+      stroke: '#00b37e',
+      strokeDashArray: [6, 6],
+      strokeWidth: 1.5,
+      selectable: false,
+      evented: false
+    });
+
+    canvas.add(printGuide);
+
+    // 3. Delimitar el área real de recorte (ClipPath)
+    // Evita que el estampado sobresalga del pecho de la camisa
+    const clipRect = new fabric.Rect({
+      left: printArea.left,
+      top: printArea.top,
+      width: printArea.width,
+      height: printArea.height,
+      absolutePositioned: true
+    });
+
+    // 4. Manejo de color
+    const colorInput = document.getElementById('shirtColor');
+    const colorLayer = document.getElementById('shirtColorLayer');
+
+    function updateColor(hex) {
+      colorInput.value = hex;
+      colorLayer.style.backgroundColor = hex;
+    }
+
+    colorInput.addEventListener('input', (e) => updateColor(e.target.value));
+
+    // 5. Carga de archivo de estampado
+    document.getElementById('imageUpload').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function (f) {
-        fabric.Image.fromURL(f.target.result, (img) => {
-          // Escalar la imagen para que quepa bien en el pecho de la camiseta
-          img.scaleToWidth(140);
+      reader.onload = (event) => {
+        fabric.Image.fromURL(event.target.result, (img) => {
+          // Escalar proporcional dentro del área
+          if (img.width > printArea.width) {
+            img.scaleToWidth(printArea.width * 0.85);
+          }
+
           img.set({
-            left: 155,
-            top: 150,
-            cornerColor: '#4f46e5',
-            cornerSize: 9,
-            transparentCorners: false
+            left: printArea.left + (printArea.width - img.getScaledWidth()) / 2,
+            top: printArea.top + 30,
+            cornerColor: '#00b37e',
+            cornerStyle: 'circle',
+            borderColor: '#00b37e',
+            cornerSize: 10,
+            transparentCorners: false,
+            clipPath: clipRect // Restringe el diseño al área A4
           });
 
           canvas.add(img);
@@ -236,24 +341,72 @@
       reader.readAsDataURL(file);
     });
 
-    // Eliminar objeto activo (estampado)
-    document.getElementById('removeSelected').addEventListener('click', () => {
-      const activeObject = canvas.getActiveObject();
-      if (activeObject && activeObject !== shirtBackground) {
-        canvas.remove(activeObject);
+    // 6. Centrado Horizontal del diseño activo
+    document.getElementById('centerHBtn').addEventListener('click', () => {
+      const active = canvas.getActiveObject();
+      if (active) {
+        active.set({
+          left: printArea.left + (printArea.width - active.getScaledWidth()) / 2
+        });
+        active.setCoords();
+        canvas.renderAll();
       }
     });
 
-    // Descargar resultado
+    // 7. Alternar visibilidad de la guía punteada
+    document.getElementById('toggleGuide').addEventListener('change', (e) => {
+      printGuide.set('visible', e.target.checked);
+      canvas.renderAll();
+    });
+
+    // 8. Eliminar elemento seleccionado
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+      const active = canvas.getActiveObject();
+      if (active) {
+        canvas.remove(active);
+        canvas.renderAll();
+      }
+    });
+
+    // 9. Exportar imagen fusionada completa (Color + Estampado + Sombras)
     document.getElementById('exportBtn').addEventListener('click', () => {
-      const dataURL = canvas.toDataURL({
-        format: 'png',
-        quality: 1
-      });
-      const link = document.createElement('a');
-      link.download = 'mi-diseno-camisa.png';
-      link.href = dataURL;
-      link.click();
+      // Ocultar la guía punteada temporalmente para el render
+      const guideWasVisible = printGuide.visible;
+      printGuide.set('visible', false);
+      canvas.renderAll();
+
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = 500;
+      exportCanvas.height = 560;
+      const ctx = exportCanvas.getContext('2d');
+
+      const overlayImg = new Image();
+      overlayImg.crossOrigin = "anonymous";
+      overlayImg.src = 'https://i.ibb.co/3sX8M8K/tshirt-mask.png';
+
+      overlayImg.onload = () => {
+        // 1. Dibujar silueta con el color de fondo
+        ctx.fillStyle = colorInput.value;
+        ctx.fillRect(0, 0, 500, 560);
+
+        // 2. Dibujar el canvas con el estampado
+        ctx.drawImage(canvas.lowerCanvasEl, 0, 0);
+
+        // 3. Aplicar modo multiply con las sombras/arrugas
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.drawImage(overlayImg, 0, 0, 500, 560);
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Descargar PNG
+        const link = document.createElement('a');
+        link.download = 'mockup-camiseta.png';
+        link.href = exportCanvas.toDataURL('image/png');
+        link.click();
+
+        // Restaurar estado de la guía
+        printGuide.set('visible', guideWasVisible);
+        canvas.renderAll();
+      };
     });
   </script>
 </body>
